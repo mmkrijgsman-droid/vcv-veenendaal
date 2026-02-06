@@ -65,9 +65,15 @@ export default function VolleyballTracker() {
   const [savedMatches, setSavedMatches] = useState([]);
   const [showConfirmSaveBeforeNew, setShowConfirmSaveBeforeNew] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) return window.innerWidth * 0.85;
+    return 320;
+  });
   const [isResizing, setIsResizing] = useState(false);
-  const [compactSidebarWidth, setCompactSidebarWidth] = useState(280);
+  const [compactSidebarWidth, setCompactSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return Math.min(100, window.innerWidth * 0.15);
+    return 280;
+  });
   const [isResizingCompact, setIsResizingCompact] = useState(false);
   const [selectedAnalysisSet, setSelectedAnalysisSet] = useState('current'); // 'current' of set nummer of 'overall'
 
@@ -140,6 +146,20 @@ export default function VolleyballTracker() {
       setTimeout(() => setConfetti([]), 4000);
     }
   }, [setWinner, matchWinner]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setSidebarWidth(window.innerWidth * 0.85);
+      }
+      if (window.innerWidth < 1024) {
+        setCompactSidebarWidth(Math.min(100, window.innerWidth * 0.15));
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // NeVoBo Libero Regels Validatie
   const validateLiberoSubstitution = (liberoId, playerOutId, currentLineup) => {
@@ -986,13 +1006,13 @@ export default function VolleyballTracker() {
           )}
         </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 hover:bg-gray-700 rounded">
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          {menuOpen ? <X size={32} className="sm:w-6 sm:h-6" /> : <Menu size={32} className="sm:w-6 sm:h-6" />}
         </button>
       </header>
 
       <div 
         className={`fixed top-0 right-0 h-full bg-gray-800 shadow-lg transform transition-transform z-50 ${menuOpen ? 'translate-x-0' : 'translate-x-full'} overflow-y-auto`}
-        style={{ width: `${sidebarWidth}px` }}
+        style={{ width: typeof window !== 'undefined' && window.innerWidth < 640 ? '85vw' : `${sidebarWidth}px` }}
       >
         {/* Resize Handle */}
         <div 
@@ -1832,8 +1852,12 @@ export default function VolleyballTracker() {
         </div>
 
         <div 
-          className="bg-gray-800 rounded p-3 overflow-y-auto flex-shrink-0 transition-all duration-300 relative z-30"
-          style={{ width: sidebarExpanded ? '320px' : `${compactSidebarWidth}px` }}
+          className="bg-gray-800 rounded p-3 overflow-y-auto flex-shrink-0 transition-all duration-300 relative z-30 hidden sm:block"
+          style={{ 
+            width: typeof window !== 'undefined' && window.innerWidth < 1024 
+              ? (sidebarExpanded ? 'min(320px, 40vw)' : 'min(100px, 15vw)')
+              : (sidebarExpanded ? '320px' : `${compactSidebarWidth}px`)
+          }}
         >
           {/* Resize Handle voor compacte sidebar - LINKS */}
           <div 
